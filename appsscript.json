@@ -1,0 +1,28 @@
+{
+  "timeZone": "Etc/UTC",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/documents.currentonly",
+    "https://www.googleapis.com/auth/presentations.currentonly",
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "addOns": {
+    "common": {
+      "name": "CodeCogs Equation Editor",
+      "logoUrl": "https://editor.codecogs.com/favicon.ico",
+      "useLocaleFromApp": true,
+      "layoutProperties": {
+        "primaryColor": "#2c7a4b"
+      }
+    },
+    "docs": {
+      "addOnType": "EDITOR"
+    },
+    "slides": {
+      "addOnType": "EDITOR"
+    }
+  }
+}
