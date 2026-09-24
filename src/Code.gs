@@ -58,7 +58,10 @@ function getConfig() {
     var props = PropertiesService.getScriptProperties();
     return {
         server: props.getProperty( 'EQNEDITOR_SERVER' ) || DEFAULT_SERVER,
-        renderUrl: props.getProperty( 'EQNEDITOR_RENDER_URL' ) || DEFAULT_RENDER_URL
+        renderUrl: props.getProperty( 'EQNEDITOR_RENDER_URL' ) || DEFAULT_RENDER_URL,
+        // Passed straight to EqEditor.init() - an empty licence is the normal, expected state
+        // until a real one is configured, not a required property.
+        licence: props.getProperty( 'EQNEDITOR_LICENCE' ) || ''
     };
 }
 
