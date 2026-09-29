@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!--
+  A preview of the Google Docs/Slides add-on outside Google: the add-on's own sidebar
+  (src/Sidebar.html, unchanged) beside a stand-in document. Apps Script's google.script.run
+  bridge is replaced by a stub that answers getConfig() the way Code.gs does from its script
+  properties (EQNEDITOR_SERVER, EQNEDITOR_LICENCE, EQNEDITOR_RENDER_URL), and that puts the
+  equation into the stand-in document instead of calling insertEquation() in Code.gs.
+
+  In Google Workspace itself, push src/ with clasp and set those script properties - see
+  README.md. Replace the licence with your own fxTeX Pro licence key (fx_pk_...), from
+  editor.codecogs.com.
+-->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CodeCogs Equation Editor - Google Docs add-on preview</title>
+    <style>
+        body { margin: 0; background: #f1f3f4; font-family: Arial, sans-serif; color: #1c2530; }
+        .app { display: flex; gap: 16px; padding: 16px; height: 100vh; box-sizing: border-box; }
+        .doc { flex: 1; min-width: 0; overflow: auto; background: #fff; padding: 48px 56px;
+               box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+        .doc img { vertical-align: middle; margin: 4px 0; }
+        .sidebar { flex: 0 0 300px; display: flex; flex-direction: column; background: #fff;
+                   box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+        .sidebar-title { padding: 12px 16px; font-size: 16px; border-bottom: 1px solid #dadce0; }
+        .sidebar iframe { flex: 1; width: 100%; border: 0; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="doc" id="doc">
+            <p>Sample text and an equation:</p>
+            <p><img src="https://latex.codecogs.com/png.image?\dpi{110}\sum_{i=0}^{n}a_i^2&plus;b"
+                    alt="\sum_{i=0}^{n}a_i^2+b"></p>
+            <p>Build an equation in the sidebar, then press Insert.</p>
+        </div>
+        <div class="sidebar">
+            <div class="sidebar-title">CodeCogs Equation Editor</div>
+            <iframe id="sidebar" title="Add-on sidebar"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // What Code.gs does, for this page: getConfig() from the script properties, and
+        // insertEquation() putting the rendered image at the end of the document.
+        var backend = {
+            getConfig: function () {
+                return {
+                    server: '{{EQN_SERVER}}',
+                    renderUrl: 'https://latex.codecogs.com',
+                    licence: '{{FXTEXPRO_KEY}}'
+                };
+            },
+            insertEquation: function ( url ) {
+                var p = document.createElement( 'p' );
+                var img = document.createElement( 'img' );
+                img.src = url;
+                p.appendChild( img );
+                document.getElementById( 'doc' ).appendChild( p );
+                return { ok: true, message: 'Equation inserted.' };
+            }
+        };
+
+        // google.script.run, as the sidebar sees it: withSuccessHandler()/withFailureHandler()
+        // chain, and calling a server function answers asynchronously.
+        function scriptRun( onSuccess, onFailure ) {
+            return new Proxy( {}, {
+                get: function ( target, name ) {
+                    if ( name === 'withSuccessHandler' ) return function ( fn ) { return scriptRun( fn, onFailure ); };
+                    if ( name === 'withFailureHandler' ) return function ( fn ) { return scriptRun( onSuccess, fn ); };
+                    return function () {
+                        var args = arguments;
+                        setTimeout( function () {
+                            try {
+                                var result = backend[ name ].apply( null, args );
+                                if ( onSuccess ) onSuccess( result );
+                            } catch ( err ) {
+                                if ( onFailure ) onFailure( err );
+                            }
+                        }, 50 );
+                    };
+                }
+            } );
+        }
+
+        fetch( 'src/Sidebar.html' )
+            .then( function ( r ) { return r.text(); } )
+            .then( function ( html ) {
+                var frame = document.getElementById( 'sidebar' );
+                // srcdoc keeps this page's origin, so the frame can reach the stub below.
+                frame.srcdoc = html.replace( '<head>',
+                    '<head><script>window.google = { script: { run: parent.scriptRun() } };<\/script>' );
+            } );
+    </script>
+</body>
+</html>
