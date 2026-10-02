@@ -3,8 +3,11 @@
   A preview of the Google Docs/Slides add-on outside Google: the add-on's own sidebar
   (src/Sidebar.html, unchanged) beside a stand-in document. Apps Script's google.script.run
   bridge is replaced by a stub that answers getConfig() the way Code.gs does from its script
-  properties (EQNEDITOR_SERVER, EQNEDITOR_LICENCE, EQNEDITOR_RENDER_URL), and that puts the
-  equation into the stand-in document instead of calling insertEquation() in Code.gs.
+  properties (EQNEDITOR_SERVER, EQNEDITOR_LICENCE, EQNEDITOR_DESIGN, EQNEDITOR_RENDER_URL), and
+  that puts the equation into the stand-in document instead of calling insertEquation() in Code.gs.
+
+  The sidebar is mounted into this page rather than a frame of its own: fxTeX Pro checks the
+  licence against the page's address, and a frame written from here would have none.
 
   In Google Workspace itself, push src/ with clasp and set those script properties - see
   README.md. Replace the licence with your own fxTeX Pro licence key (fx_pk_...), from
@@ -22,9 +25,8 @@
                box-shadow: 0 1px 3px rgba(0,0,0,.15); }
         .doc img { vertical-align: middle; margin: 4px 0; }
         .sidebar { flex: 0 0 300px; display: flex; flex-direction: column; background: #fff;
-                   box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+                   box-shadow: 0 1px 3px rgba(0,0,0,.15); overflow: auto; }
         .sidebar-title { padding: 12px 16px; font-size: 16px; border-bottom: 1px solid #dadce0; }
-        .sidebar iframe { flex: 1; width: 100%; border: 0; }
     </style>
 </head>
 <body>
@@ -39,7 +41,7 @@
         </div>
         <div class="sidebar">
             <div class="sidebar-title">CodeCogs Equation Editor</div>
-            <iframe id="sidebar" title="Add-on sidebar"></iframe>
+            <div id="sidebar"></div>
         </div>
     </div>
 
@@ -86,14 +88,30 @@
             } );
         }
 
+        window.google = { script: { run: scriptRun() } };
+
+        // Sidebar.html, into #sidebar: its styles (with "body" meaning the sidebar), its markup,
+        // then its scripts - recreated, since scripts parsed from a string never run.
+        function mountPage( html, box ) {
+            var page = new DOMParser().parseFromString( html, 'text/html' );
+            page.querySelectorAll( 'style' ).forEach( function ( st ) {
+                var style = document.createElement( 'style' );
+                style.textContent = st.textContent.replace( /(^|[},\s])body(?=\s*[{,])/g, '$1#' + box.id );
+                document.head.appendChild( style );
+            } );
+            Array.prototype.slice.call( page.body.childNodes ).forEach( function ( node ) {
+                if ( node.nodeName !== 'SCRIPT' ) box.appendChild( document.importNode( node, true ) );
+            } );
+            page.body.querySelectorAll( 'script' ).forEach( function ( old ) {
+                var script = document.createElement( 'script' );
+                script.textContent = old.textContent;
+                box.appendChild( script );
+            } );
+        }
+
         fetch( 'src/Sidebar.html' )
             .then( function ( r ) { return r.text(); } )
-            .then( function ( html ) {
-                var frame = document.getElementById( 'sidebar' );
-                // srcdoc keeps this page's origin, so the frame can reach the stub below.
-                frame.srcdoc = html.replace( '<head>',
-                    '<head><script>window.google = { script: { run: parent.scriptRun() } };<\/script>' );
-            } );
+            .then( function ( html ) { mountPage( html, document.getElementById( 'sidebar' ) ); } );
     </script>
 </body>
 </html>
