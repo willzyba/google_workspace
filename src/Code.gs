@@ -12,7 +12,7 @@
  * why 'latex' and 'mathml' modes are not offered.
  */
 
-var DEFAULT_SERVER = 'editor.codecogs.com';
+var DEFAULT_SERVER = 'fxeditor.codecogs.com';
 var DEFAULT_RENDER_URL = 'https://latex.codecogs.com';
 
 /** One add-on menu item, wired to whichever host (Docs or Slides) is running it. */
@@ -53,6 +53,16 @@ function getUi_() {
     }
 }
 
+// EQNEDITOR_DESIGN is JSON; anything that does not parse is treated as no design at all, so a
+// typo leaves the standard editor rather than a broken one.
+function parseDesign( json ) {
+    try {
+        return JSON.parse( json || '{}' ) || {};
+    } catch ( e ) {
+        return {};
+    }
+}
+
 /** Site-wide config, read by Sidebar.html on load. Script Properties override the defaults - see README. */
 function getConfig() {
     var props = PropertiesService.getScriptProperties();
@@ -61,7 +71,9 @@ function getConfig() {
         renderUrl: props.getProperty( 'EQNEDITOR_RENDER_URL' ) || DEFAULT_RENDER_URL,
         // Passed straight to EqEditor.init() - an empty licence is the normal, expected state
         // until a real one is configured, not a required property.
-        licence: props.getProperty( 'EQNEDITOR_LICENCE' ) || ''
+        licence: props.getProperty( 'EQNEDITOR_LICENCE' ) || '',
+        // How the editor looks, as JSON - see the `design` option in the README.
+        design: parseDesign( props.getProperty( 'EQNEDITOR_DESIGN' ) )
     };
 }
 
