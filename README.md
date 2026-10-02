@@ -39,7 +39,7 @@ src/Sidebar.html      The sidebar UI - the full EqEditor UI, loaded the same way
 ## How the insert actually happens
 
 1. The sidebar (running in Apps Script's sandboxed iframe) loads `eqneditor.api.min.js` and
-   `eqneditor.css` from `fxeditor.codecogs.com` exactly the way the other adapters do, and
+   `eqneditor.css` from `fxtex.codecogs.com` exactly the way the other adapters do, and
    builds the same `EqEditor.TextArea`/`Toolbar`/`MathView`/`Output` set.
 2. Pressing **Insert** reads the current equation via `Output.exportAs('url')` - the exact
    same call the other adapters use, so this add-on never re-derives or re-escapes a rendering
@@ -86,7 +86,7 @@ same defaults every other adapter uses if neither is set:
 
 | Script Property | Default | Meaning |
 |---|---|---|
-| `EQNEDITOR_SERVER` | `fxeditor.codecogs.com` | Host the Equation Editor's own code is loaded from. |
+| `EQNEDITOR_SERVER` | `fxtex.codecogs.com` | Host the Equation Editor's own code is loaded from. |
 | `EQNEDITOR_RENDER_URL` | `https://latex.codecogs.com` | The rendering service. |
 
 ## Known gaps
