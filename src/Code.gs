@@ -3,7 +3,7 @@
  *
  * A "classic" editor add-on (not a Card-based Workspace Add-on): one menu item opens a
  * sidebar (Sidebar.html) containing the full Equation Editor UI, the same one every other
- * eqneditor-v5-plugins adapter embeds. The sidebar itself only builds an equation; inserting
+ * fxPlugins adapter embeds. The sidebar itself only builds an equation; inserting
  * it into the document happens here, server-side, because DocumentApp/SlidesApp are only
  * available in Apps Script's server context, not in the sandboxed sidebar iframe.
  *
