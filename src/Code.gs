@@ -1,5 +1,5 @@
 /**
- * CodeCogs Equation Editor - Google Docs & Slides add-on, server side.
+ * LaTeX Equation Editor - fxEditor: the Google Docs & Slides add-on, server side.
  *
  * A "classic" editor add-on (not a Card-based Workspace Add-on): one menu item opens a
  * sidebar (Sidebar.html) containing the full Equation Editor UI, the same one every other
@@ -29,7 +29,7 @@ function onInstall(e) {
 
 function showSidebar() {
     var html = HtmlService.createHtmlOutputFromFile('Sidebar')
-        .setTitle('Equation Editor')
+        .setTitle('LaTeX Equation Editor')
         .setWidth(420);
     getUi_().showSidebar(html);
 }
@@ -48,7 +48,7 @@ function getUi_() {
         try {
             return SlidesApp.getUi();
         } catch (slidesErr) {
-            throw new Error( 'CodeCogs Equation Editor: not running inside Docs or Slides.' );
+            throw new Error( 'LaTeX Equation Editor: not running inside Docs or Slides.' );
         }
     }
 }
@@ -78,21 +78,29 @@ function getConfig() {
 }
 
 /**
- * Fetches the rendered equation as an image and inserts it at the current cursor (Docs) or
+ * Fetches the rendered equation as a PNG and inserts it at the current cursor (Docs) or
  * onto the current slide (Slides). Fetching server-side, rather than asking the sidebar to
  * upload image bytes it fetched itself, means the render URL never needs to be reachable
  * from the sidebar's sandboxed iframe - only from Google's own servers, which is where
  * UrlFetchApp actually runs.
  *
- * The URL itself is built client-side, by EqEditor's own Output.exportAs('url') - the same
- * call every other adapter in this repo uses - rather than re-derived here from raw LaTeX,
- * because CodeCogs' own query-escaping for spaces/plus/hash is EqEditor's to get right, not
- * this add-on's to guess at a second time.
+ * The URL itself is built client-side, by EqEditor's own Output.getEquationURL(), rather than
+ * re-derived here from raw LaTeX: CodeCogs' own query-escaping for spaces/plus/hash is
+ * EqEditor's to get right, not this add-on's to guess at a second time.
  *
- * @param {string} url The full rendering URL, from EqEditor's Output.exportAs('url').
+ * A PNG, because Docs and Slides take only raster images (PNG, JPEG, GIF): an SVG is refused,
+ * and neither has a MathML or LaTeX object to write into. It is inserted at 96/dpi of its pixel
+ * size, `dpi` being what a normal-size equation is rendered at - three times screen resolution,
+ * so it is sharp zoomed in or printed. The sidebar renders a larger or smaller one (its Size) at
+ * a proportionally higher or lower resolution, which comes out that much larger or smaller here.
+ * Its LaTeX goes in the image's alt text, for screen readers.
+ *
+ * @param {string} url The full rendering URL, from EqEditor's Output.getEquationURL().
+ * @param {string} latex The equation's LaTeX, for the alt text.
+ * @param {number} dpi What a normal-size equation is rendered at - EQUATION_DPI in Sidebar.html.
  * @returns {{ok: boolean, message: string}}
  */
-function insertEquation(url) {
+function insertEquation(url, latex, dpi) {
     if (!url) {
         return {ok: false, message: 'No equation to insert.'};
     }
@@ -109,16 +117,22 @@ function insertEquation(url) {
     }
 
     var blob = response.getBlob().setName('equation.png');
+    var scale = Number(dpi) > 96 ? 96 / Number(dpi) : 1;
+    function fit(image) {
+        image.setWidth(Math.max(1, Math.round(image.getWidth() * scale)));
+        image.setHeight(Math.max(1, Math.round(image.getHeight() * scale)));
+    }
 
     try {
         if (typeof DocumentApp !== 'undefined') {
             var doc = DocumentApp.getActiveDocument();
             var cursor = doc.getCursor();
-            if (cursor) {
-                cursor.insertInlineImage(blob);
-            } else {
-                doc.getBody().appendImage(blob);
+            var image = cursor ? cursor.insertInlineImage(blob) : doc.getBody().appendImage(blob);
+            if (!image) {
+                return {ok: false, message: 'An equation cannot go there - put the cursor in some text.'};
             }
+            fit(image);
+            if (latex) image.setAltDescription(latex);
             return {ok: true, message: 'Equation inserted.'};
         }
 
@@ -126,7 +140,9 @@ function insertEquation(url) {
             var presentation = SlidesApp.getActivePresentation();
             var selection = presentation.getSelection();
             var slide = selection && selection.getCurrentPage ? selection.getCurrentPage() : presentation.getSlides()[0];
-            slide.insertImage(blob);
+            var picture = slide.insertImage(blob);
+            fit(picture);
+            if (latex) picture.setDescription(latex);
             return {ok: true, message: 'Equation inserted.'};
         }
     } catch (insertErr) {

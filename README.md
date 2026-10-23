@@ -1,4 +1,4 @@
-# CodeCogs Equation Editor for Google Docs & Slides
+# LaTeX Equation Editor - fxEditor, for Google Docs & Slides
 
 A Google Workspace **editor add-on** (Apps Script, not an npm package - Docs and Slides have
 no plugin system to load one into) that adds an **Insert equation...** item to the Add-ons
@@ -60,7 +60,7 @@ Apps Script CLI - neither exists yet for this add-on.
 ```
 npm install -g @google/clasp
 clasp login
-clasp create --type docs --title "CodeCogs Equation Editor" --rootDir src
+clasp create --type docs --title "LaTeX Equation Editor - fxEditor" --rootDir src
 clasp push
 ```
 

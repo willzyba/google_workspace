@@ -11,7 +11,7 @@
   ],
   "addOns": {
     "common": {
-      "name": "CodeCogs Equation Editor",
+      "name": "LaTeX Equation Editor - fxEditor",
       "logoUrl": "https://editor.codecogs.com/favicon.ico",
       "useLocaleFromApp": true,
       "layoutProperties": {
