@@ -12,7 +12,7 @@
   "addOns": {
     "common": {
       "name": "LaTeX Equation Editor - fxEditor",
-      "logoUrl": "https://editor.codecogs.com/favicon.ico",
+      "logoUrl": "https://fxplugins.codecogs.com/site/images/fxeditor-icon-128.png",
       "useLocaleFromApp": true,
       "layoutProperties": {
         "primaryColor": "#2c7a4b"

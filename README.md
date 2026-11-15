@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/willzyba/google_workspace/main/screenshots/icon.png" alt="" width="96" align="right">
+
 # fxEditor for Google Docs and Slides
 
 The fxEditor add-on for Google Docs and Google Slides adds **Insert equation...** to the
@@ -81,7 +83,7 @@ register for an add-on, [contact us](https://fxeditor.codecogs.com/contact).
 | `EQNEDITOR_LICENCE` | *(empty)* | Your fxEditor licence key. Required. |
 | `EQNEDITOR_DESIGN` | *(empty)* | The editor's look, as JSON: dialog width, height and scale, toolbar panels and size, colour, equation and markup sizes, undo/redo. Build one in [Customise and download](https://fxplugins.codecogs.com/docs/google-docs.html#customise) - `design.json` in the download. JSON that does not parse is ignored. |
 | `EQNEDITOR_SERVER` | `fxtex.codecogs.com` | Host the equation editor is loaded from. |
-| `EQNEDITOR_RENDER_URL` | `https://latex.codecogs.com` | The service that draws the images. |
+| `EQNEDITOR_RENDER_URL` | `https://fxtex.codecogs.com` | The service that draws the images. |
 
 ## Licence
 

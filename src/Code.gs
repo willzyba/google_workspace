@@ -13,7 +13,7 @@
  */
 
 var DEFAULT_SERVER = 'fxtex.codecogs.com';
-var DEFAULT_RENDER_URL = 'https://latex.codecogs.com';
+var DEFAULT_RENDER_URL = 'https://fxtex.codecogs.com';
 
 /** One add-on menu item, wired to whichever host (Docs or Slides) is running it. */
 function onOpen(e) {
