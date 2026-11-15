@@ -1,103 +1,126 @@
-# LaTeX Equation Editor - fxEditor, for Google Docs & Slides
+# fxEditor for Google Docs and Slides
 
-A Google Workspace **editor add-on** (Apps Script, not an npm package - Docs and Slides have
-no plugin system to load one into) that adds an **Insert equation...** item to the Add-ons
-menu in both Docs and Slides, opening a sidebar with the same Equation Editor UI every other
-adapter in this repo embeds.
+The fxEditor add-on for Google Docs and Google Slides adds **Insert equation...** to the
+Extensions menu. It opens fxEditor, CodeCogs' equation editor - a toolbar of symbols and
+structures, a LaTeX view and a rendered maths view - in a sidebar beside your document. Press
+**Insert** and the equation is placed at the cursor (Docs) or on the current slide (Slides).
 
-**This has not been deployed or run against a real Google account** - there is no Google Cloud
-project or Apps Script project behind this repo to test it in. The code follows Google's
-documented Apps Script / editor add-on APIs as closely as current knowledge of them allows, and
-has been checked for JavaScript syntax errors, but every step below needs to actually be done,
-and the result clicked through, before this is a real add-on anyone can install.
+Docs and Slides have no toolbar a third party can add a button to, so the add-on is a menu item
+and a sidebar rather than an **fx** button. And they have no way for an add-on to insert MathML
+or live LaTeX, so the equation goes in as an image: a PNG drawn at the moment you insert it, so
+the document does not depend on our service afterwards. The equation's LaTeX is kept in the
+image's alt text, for screen readers. An inserted equation cannot be reopened in the editor -
+to change one, build it again in the sidebar and insert it in place of the old one.
 
-## Why this is a sidebar, not a toolbar button
+In Google Workspace the add-on is called **LaTeX Equation Editor - fxEditor**. It is an Apps
+Script project, not an npm package.
 
-Docs and Slides expose no API for a third party to add a button to their own toolbar - the
-only UI surface an editor add-on gets is an Add-ons menu item and, from it, a sidebar
-(`HtmlService`) or a dialog. A menu item opening a sidebar is the standard shape for this kind
-of add-on.
+**Status: preview.** The add-on is not yet listed on the Google Workspace Marketplace. Deploy
+your own copy from this repository, as described below. It has not yet been run end to end in a
+real Google account - the screenshot below is the sidebar in our stand-in preview
+(`example.html`), not in Google Docs itself.
 
-## Why this only inserts as an image
+## Screenshot
 
-Unlike the CKEditor 5, TinyMCE, Froala and Tiptap adapters, there is no `insertAs` option here.
-Docs and Slides have no native LaTeX or MathML object for Apps Script to write into - `'latex'`
-mode would just leave inert `$$...$$` text sitting in the document, since neither app runs
-anything like fxTeX to convert it; `'mathml'` mode has no representation at all in the Docs/
-Slides object model. An inserted image is the only form that reliably means something in either
-app, so it is the only form this add-on offers.
+![The LaTeX Equation Editor sidebar beside a document with an inserted equation](https://raw.githubusercontent.com/willzyba/google_workspace/main/screenshots/sidebar.png)
 
-## Structure
+*The equation editor sidebar beside a document.*
 
-```
-appsscript.json      Manifest - OAuth scopes, Docs/Slides add-on registration.
-src/Code.gs           Server-side: menu registration, the sidebar, and the insert itself.
-src/Sidebar.html      The sidebar UI - the full EqEditor UI, loaded the same way every other
-                      adapter loads it (see below), plus an Insert button.
-```
+## Links
 
-## How the insert actually happens
+- Documentation and live demo: https://fxplugins.codecogs.com/docs/google-docs.html
+- Customise and download: https://fxplugins.codecogs.com/docs/google-docs.html#customise
+- All fxEditor plugins: https://fxplugins.codecogs.com
+- fxEditor: https://fxeditor.codecogs.com
 
-1. The sidebar (running in Apps Script's sandboxed iframe) loads `fxeditor.api.min.js` and
-   `fxeditor.css` from `fxtex.codecogs.com` exactly the way the other adapters do, and
-   builds the same `EqEditor.TextArea`/`Toolbar`/`MathView`/`Output` set.
-2. Pressing **Insert** reads the current equation via `Output.exportAs('url')` - the exact
-   same call the other adapters use, so this add-on never re-derives or re-escapes a rendering
-   URL itself - and calls `google.script.run.insertEquation(url)`.
-3. `insertEquation()` runs **server-side** (on Google's servers, not in the sidebar), fetches
-   the rendered PNG with `UrlFetchApp`, and inserts it at the cursor (Docs) or onto the current
-   slide (Slides).
+## Installing from git
 
-Fetching server-side rather than asking the sidebar to upload image bytes means the rendering
-service only ever needs to be reachable from Google's servers, not from inside the sidebar's
-sandboxed iframe.
+Deploy your own copy - for example, as an add-on private to your Google Workspace domain - with
+Google's [`clasp`](https://github.com/google/clasp) tool:
 
-## Deploying
-
-This needs a Google Cloud project and [`clasp`](https://github.com/google/clasp), Google's own
-Apps Script CLI - neither exists yet for this add-on.
-
-```
+```bash
+git clone https://github.com/willzyba/google_workspace.git
+cd google_workspace
 npm install -g @google/clasp
 clasp login
 clasp create --type docs --title "LaTeX Equation Editor - fxEditor" --rootDir src
+cp appsscript.json src/appsscript.json
 clasp push
 ```
 
-(`--type docs` scaffolds a Docs-bound project; the manifest's own `addOns.slides` section is
-what actually makes it install into Slides too - `--type` only affects clasp's own scaffold.)
+`clasp` pushes only what is in `src/`, and `clasp create` puts a default manifest there, so the
+`cp` replaces it with this repository's `appsscript.json` - the OAuth scopes and the Docs and
+Slides add-on registration. (`--type docs` only affects clasp's own scaffold; the manifest's
+`addOns.slides` section is what makes the add-on work in Slides too.)
+
+Then set its Script properties - in the Apps Script editor, *Project Settings > Script
+Properties* - with at least your licence key (see [Licence key](#licence-key)).
 
 Then, from the Apps Script editor:
 
-1. *Deploy &rarr; Test deployments* to try it in your own Docs/Slides before publishing.
-2. *Deploy &rarr; New deployment &rarr; Editor Add-on* once it is working, which requires the
-   Cloud project it runs under to complete Google's OAuth verification before anyone outside
-   your own organisation can install it - the `oauthScopes` in `appsscript.json` are broad
-   enough (`documents.currentonly`, `presentations.currentonly`) that this will need it.
-3. To publish it to the Google Workspace Marketplace for anyone to find, list it from
-   *Deploy &rarr; New deployment*, which needs a Marketplace SDK configuration and store
-   listing that do not exist yet either.
+1. *Deploy > Test deployments* to try it in your own Docs and Slides.
+2. *Deploy > New deployment > Editor Add-on* once it is working. Before anyone outside your own
+   organisation can install it, the Google Cloud project it runs under has to complete Google's
+   OAuth verification.
+3. To list it on the Google Workspace Marketplace for anyone to find, you also need a
+   Marketplace SDK configuration and store listing.
 
-## Configuration
+## Licence key
 
-`Code.gs`'s `getConfig()` reads two [Script
-Properties](https://developers.google.com/apps-script/guides/properties), falling back to the
-same defaults every other adapter uses if neither is set:
+Equations are rendered by fxTeX Pro, which needs a licence key for your domain.
 
-| Script Property | Default | Meaning |
+- Get a key from https://fxeditor.codecogs.com/purchase - paid plans, and a free trial.
+- Teachers and students can get a free individual licence at
+  https://fxeditor.codecogs.com/academic.
+- Manage your keys - add domains, copy a key - in the licence manager at
+  https://fxeditor.codecogs.com/login.
+
+The key goes in the Script property `EQNEDITOR_LICENCE`. If you are not sure which domain to
+register for an add-on, [contact us](https://fxeditor.codecogs.com/contact).
+
+### Script properties
+
+| Script property | Default | Meaning |
 |---|---|---|
-| `EQNEDITOR_SERVER` | `fxtex.codecogs.com` | Host the Equation Editor's own code is loaded from. |
-| `EQNEDITOR_RENDER_URL` | `https://latex.codecogs.com` | The rendering service. |
+| `EQNEDITOR_LICENCE` | *(empty)* | Your fxEditor licence key. Required. |
+| `EQNEDITOR_DESIGN` | *(empty)* | The editor's look, as JSON: dialog width, height and scale, toolbar panels and size, colour, equation and markup sizes, undo/redo. Build one in [Customise and download](https://fxplugins.codecogs.com/docs/google-docs.html#customise) - `design.json` in the download. JSON that does not parse is ignored. |
+| `EQNEDITOR_SERVER` | `fxtex.codecogs.com` | Host the equation editor is loaded from. |
+| `EQNEDITOR_RENDER_URL` | `https://latex.codecogs.com` | The service that draws the images. |
 
-## Known gaps
+## Licence
 
-- **Undeployed and untested** - see above.
-- **No automated tests.** Apps Script has its own testing story (`clasp run` against a test
-  deployment, or a mocking library for the DocumentApp/SlidesApp/UrlFetchApp globals); neither
-  exists yet.
-- **No Slides "current slide" fallback verified.** `insertEquation()` falls back to the first
-  slide if nothing is selected - reasonable in principle, but not exercised against a real
-  Slides selection.
-- **No OAuth verification.** Until Google completes review of the Cloud project this runs
-  under, the add-on can only be installed by the developer's own account or a testing group
-  added in the Cloud Console, not published for anyone to find.
+Copyright CodeCogs (https://www.codecogs.com). This repository does not yet carry a licence
+file.
+
+## How it works
+
+```
+appsscript.json      Manifest - OAuth scopes, Docs/Slides add-on registration.
+src/Code.gs          Server side: the menu item, the sidebar, the configuration and the insert.
+src/Sidebar.html     The sidebar: the equation editor, loaded the same way every other fxEditor
+                     plugin loads it, plus an Insert button.
+example.html         A preview of the sidebar outside Google, beside a stand-in document.
+```
+
+1. The sidebar, running in Apps Script's sandboxed frame, reads its configuration from
+   `getConfig()` in `Code.gs` and loads `fxeditor.api.min.js` and `fxeditor.css` from the
+   equation editor host.
+2. Pressing **Insert** takes the rendering URL of the current equation from the equation
+   editor itself (so the add-on never builds or escapes that URL on its own) and calls
+   `insertEquation()` in `Code.gs`.
+3. `insertEquation()` runs on Google's servers: it fetches the PNG with `UrlFetchApp` and inserts
+   it at the cursor (Docs) or onto the current slide (Slides), sized from the resolution it was
+   rendered at.
+
+Fetching on the server, rather than in the sidebar, means the rendering service only needs to be
+reachable from Google's servers, not from inside the sidebar's sandboxed frame.
+
+### Known gaps
+
+- **Not yet run in a real Google account** - see *Status* above.
+- **No automated tests.** Apps Script has its own options (`clasp run` against a test
+  deployment, or mocks for the DocumentApp/SlidesApp/UrlFetchApp globals); neither is set up.
+- **Slides with nothing selected** - `insertEquation()` falls back to the first slide; not yet
+  tried against a real Slides selection.
+- **No OAuth verification** - until Google has reviewed the Cloud project it runs under, the
+  add-on can only be installed by the developer's own account or a test group.
