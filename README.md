@@ -69,11 +69,7 @@ Then, from the Apps Script editor:
 
 Equations are rendered by fxTeX Pro, which needs a licence key for your domain.
 
-- Get a key from https://fxeditor.codecogs.com/purchase - paid plans, and a free trial.
-- Teachers and students can get a free individual licence at
-  https://fxeditor.codecogs.com/academic.
-- Manage your keys - add domains, copy a key - in the licence manager at
-  https://fxeditor.codecogs.com/login.
+Get your licence key from https://fxeditor.codecogs.com/purchase.
 
 The key goes in the Script property `EQNEDITOR_LICENCE`. If you are not sure which domain to
 register for an add-on, [contact us](https://fxeditor.codecogs.com/contact).
@@ -89,8 +85,11 @@ register for an add-on, [contact us](https://fxeditor.codecogs.com/contact).
 
 ## Licence
 
-Copyright CodeCogs (https://www.codecogs.com). This repository does not yet carry a licence
-file.
+Copyright (c) 2026 CodeCogs, Zyba Ltd.
+
+The add-on is released under the MIT licence - see
+[`LICENSE`](https://github.com/willzyba/google_workspace/blob/main/LICENSE). fxEditor and
+fxTeX Pro need their own licence key, as above.
 
 ## How it works
 
