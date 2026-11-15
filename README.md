@@ -82,7 +82,7 @@ register for an add-on, [contact us](https://fxeditor.codecogs.com/contact).
 |---|---|---|
 | `EQNEDITOR_LICENCE` | *(empty)* | Your fxEditor licence key. Required. |
 | `EQNEDITOR_DESIGN` | *(empty)* | The editor's look, as JSON: dialog width, height and scale, toolbar panels and size, colour, equation and markup sizes, undo/redo. Build one in [Customise and download](https://fxplugins.codecogs.com/docs/google-docs.html#customise) - `design.json` in the download. JSON that does not parse is ignored. |
-| `EQNEDITOR_SERVER` | `fxtex.codecogs.com` | Host the equation editor is loaded from. |
+| `EQNEDITOR_SERVER` | `https://fxtex.codecogs.com` | Where the equation editor is loaded from, as a URL. |
 | `EQNEDITOR_RENDER_URL` | `https://fxtex.codecogs.com` | The service that draws the images. |
 
 ## Licence
@@ -104,8 +104,8 @@ example.html         A preview of the sidebar outside Google, beside a stand-in 
 ```
 
 1. The sidebar, running in Apps Script's sandboxed frame, reads its configuration from
-   `getConfig()` in `Code.gs` and loads `fxeditor.api.min.js` and `fxeditor.css` from the
-   equation editor host.
+   `getConfig()` in `Code.gs` and loads `fxeditor.api.min.js` and `fxeditor.css` from
+   `EQNEDITOR_SERVER` (`https://fxtex.codecogs.com`).
 2. Pressing **Insert** takes the rendering URL of the current equation from the equation
    editor itself (so the add-on never builds or escapes that URL on its own) and calls
    `insertEquation()` in `Code.gs`.

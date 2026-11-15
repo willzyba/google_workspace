@@ -12,7 +12,7 @@
  * why 'latex' and 'mathml' modes are not offered.
  */
 
-var DEFAULT_SERVER = 'fxtex.codecogs.com';
+var DEFAULT_SERVER = 'https://fxtex.codecogs.com';
 var DEFAULT_RENDER_URL = 'https://fxtex.codecogs.com';
 
 /** One add-on menu item, wired to whichever host (Docs or Slides) is running it. */
