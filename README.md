@@ -80,7 +80,7 @@ register for an add-on, [contact us](https://fxeditor.codecogs.com/contact).
 
 | Script property | Default | Meaning |
 |---|---|---|
-| `EQNEDITOR_LICENCE` | *(empty)* | Your fxEditor licence key. Required. |
+| `EQNEDITOR_LICENCE` | *(empty)* | Your fxEditor licence key. Required. With it the editor also has fxTeX Pro's chemistry and picture packages: `\ce`, `\chemfig`, the physics package and the `picture` environment. |
 | `EQNEDITOR_DESIGN` | *(empty)* | The editor's look, as JSON: dialog width, height and scale, toolbar panels and size, colour, equation and markup sizes, undo/redo. Build one in [Customise and download](https://fxplugins.codecogs.com/docs/google-docs.html#customise) - `design.json` in the download. JSON that does not parse is ignored. |
 | `EQNEDITOR_SERVER` | `https://fxtex.codecogs.com` | Where the equation editor is loaded from, as a URL. |
 | `EQNEDITOR_RENDER_URL` | `https://fxtex.codecogs.com` | The service that draws the images. |
