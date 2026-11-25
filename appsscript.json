@@ -8,21 +8,5 @@
     "https://www.googleapis.com/auth/presentations.currentonly",
     "https://www.googleapis.com/auth/script.container.ui",
     "https://www.googleapis.com/auth/script.external_request"
-  ],
-  "addOns": {
-    "common": {
-      "name": "LaTeX Equation Editor - fxEditor",
-      "logoUrl": "https://fxplugins.codecogs.com/site/images/fxeditor-icon-128.png",
-      "useLocaleFromApp": true,
-      "layoutProperties": {
-        "primaryColor": "#2c7a4b"
-      }
-    },
-    "docs": {
-      "addOnType": "EDITOR"
-    },
-    "slides": {
-      "addOnType": "EDITOR"
-    }
-  }
+  ]
 }

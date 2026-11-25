@@ -45,15 +45,18 @@ git clone https://github.com/willzyba/google_workspace.git
 cd google_workspace
 npm install -g @google/clasp
 clasp login
-clasp create --type docs --title "LaTeX Equation Editor - fxEditor" --rootDir src
+clasp create --type standalone --title "LaTeX Equation Editor - fxEditor" --rootDir src
 cp appsscript.json src/appsscript.json
-clasp push
+clasp push --force
 ```
 
 `clasp` pushes only what is in `src/`, and `clasp create` puts a default manifest there, so the
-`cp` replaces it with this repository's `appsscript.json` - the OAuth scopes and the Docs and
-Slides add-on registration. (`--type docs` only affects clasp's own scaffold; the manifest's
-`addOns.slides` section is what makes the add-on work in Slides too.)
+`cp` replaces it with this repository's `appsscript.json` - the add-on's OAuth scopes. The
+project is standalone, not bound to a document: an editor add-on runs in any Docs or Slides file
+it is installed in, and Docs and Slides are chosen when it is deployed and listed, not in the
+manifest. (`addOns` in a manifest is for card-based Workspace add-ons; an editor add-on's manifest
+must not have it.) The Apps Script API must be on for your account first, at
+https://script.google.com/home/usersettings.
 
 Then set its Script properties - in the Apps Script editor, *Project Settings > Script
 Properties* - with at least your licence key (see [Licence key](#licence-key)).
@@ -96,7 +99,7 @@ fxTeX Pro need their own licence key, as above.
 ## How it works
 
 ```
-appsscript.json      Manifest - OAuth scopes, Docs/Slides add-on registration.
+appsscript.json      Manifest - the OAuth scopes.
 src/Code.gs          Server side: the menu item, the sidebar, the configuration and the insert.
 src/Sidebar.html     The sidebar: the equation editor, loaded the same way every other fxEditor
                      plugin loads it, plus an Insert button.

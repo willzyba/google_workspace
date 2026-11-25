@@ -14,8 +14,20 @@
     <style>
         /* A column the height of the sidebar, so the predictor at the bottom takes what is left. */
         html, body { height: 100%; }
-        body { font-family: Arial, sans-serif; margin: 0; padding: 12px; color: #1c2530;
+        body { font-family: Arial, sans-serif; margin: 0; padding: 12px 0; color: #1c2530;
             box-sizing: border-box; display: flex; flex-direction: column; }
+        /* The editor - toolbar, maths view, LaTeX - across the whole width, with no frame of its own:
+           Google's sidebar is 300px, and every pixel of it is the toolbar's. A line between each part.
+           Everything else keeps a margin. */
+        .cc-top, #cc-style, #cc-editing, .cc-actions, #cc-waiting, #status, .cc-predictor { margin-left: 12px !important; margin-right: 12px !important; }
+        #equation-editor { border: 0 !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important;
+            border-top: 1px solid #e2e8f0 !important; border-bottom: 1px solid #e2e8f0 !important; }
+        #equation-editor .CCEditorBar { padding: 2px 8px !important; }
+        #cc-toolbar { padding: 0 2px !important; }
+        #cc-mathview, #cc-latex-input { border: 0 !important; border-radius: 0 !important; margin: 0 !important;
+            border-top: 1px solid #e2e8f0 !important; }
+        #cc-latex-input { border-bottom: 1px solid #e2e8f0 !important; }
+        #cc-toggle { padding: 4px 12px 6px !important; }
         #status { min-height: 18px; font-size: 12px; color: #b3261e; margin: 8px 0; }
         #status.ok { color: #2c7a4b; }
         .cc-actions { display: flex; gap: 8px; margin-top: 10px; }
@@ -25,7 +37,6 @@
         }
         #insert-btn { background: #2c7a4b; border-color: #2c7a4b; color: #fff; }
         #insert-btn:disabled { opacity: 0.5; cursor: default; }
-        .hint { font-size: 12px; color: #52606d; margin-bottom: 10px; }
         /* No rendered preview under the editor - the maths view is the equation, as in the other
            plugins. The <img> stays: EqEditor.Output binds to it, and Insert takes its URL. */
         .CCEqnOutput { display: none !important; }
@@ -65,11 +76,87 @@
         .cc-predictor { flex: 1 1 auto; min-height: 140px; overflow: auto; margin-top: 4px;
             padding-top: 8px; border-top: 1px solid #e2e8f0; }
         .cc-predictor[hidden] { display: none; }
+        /* The buttons at the top right: Larger, and Settings - where there are any to show. */
+        .cc-top { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
+        .cc-top:not(:has(button:not([hidden]))) { display: none; }
+        .cc-open-window { flex: none; padding: 4px 8px; font-size: 12px; border: 1px solid #2c7a4b; border-radius: 4px;
+            background: #fff; color: #2c7a4b; cursor: pointer; white-space: nowrap; }
+        .cc-open-window:hover { background: #eef6f1; }
+        .cc-open-window[hidden], #close-btn[hidden], #cc-waiting[hidden] { display: none; }
+        /* While a window is open over the document: what is open there, and a way to stop waiting for it. */
+        #cc-waiting { font-size: 12px; color: #2c7a4b; margin: 8px 0 0; }
+        #cc-waiting button { padding: 0; border: 0; background: none; color: #1a56b0; text-decoration: underline;
+            font: inherit; cursor: pointer; }
+        /* An equation selected in the document is open in the editor: Insert updates it. */
+        #cc-editing { margin-top: 10px; padding: 6px 8px; font-size: 12px; color: #1c4d33; background: #eef6f1;
+            border-left: 3px solid #2c7a4b; }
+        #cc-editing[hidden] { display: none; }
+        #cc-editing button { padding: 0; border: 0; background: none; color: #1a56b0; text-decoration: underline;
+            font: inherit; cursor: pointer; }
+        /* Settings, in place of the editor while it is open: the reader's own licence key. */
+        .cc-top-buttons { flex: none; display: flex; gap: 6px; }
+        .cc-settings-btn { padding: 2px 7px; font-size: 15px; line-height: 1; }
+        .cc-settings-btn[aria-expanded="true"] { background: #eef6f1; }
+        #cc-settings { margin: 0 12px; font-size: 12px; color: #3c4a59; }
+        #cc-settings[hidden] { display: none; }
+        #cc-settings h2 { font-size: 14px; margin: 4px 0 10px; color: #1c2530; }
+        #cc-settings label { display: block; font-weight: 600; margin-bottom: 4px; }
+        #cc-settings input[type="password"], #cc-settings input[type="text"] { width: 100%; box-sizing: border-box;
+            padding: 6px 8px; font: 13px monospace; border: 1px solid #cbd5e0; border-radius: 4px; }
+        #cc-settings .cc-show { display: inline-flex; align-items: center; gap: 4px; font-weight: normal; margin: 6px 0 0; cursor: pointer; }
+        #cc-licence-state { margin: 10px 0; padding: 6px 8px; border-left: 3px solid #b3261e; background: #fbeeec; }
+        #cc-licence-state.ok { border-left-color: #2c7a4b; background: #eef6f1; }
+        #cc-settings p { line-height: 1.45; }
+        #cc-settings code { font-size: 11px; word-break: break-all; }
+        #cc-settings .cc-actions button { flex: 1; }
+        #cc-toolbar-layout { margin: 16px 0 0; padding: 10px 0 0; border: 0; border-top: 1px solid #e2e8f0; }
+        #cc-toolbar-layout[hidden] { display: none; }
+        #cc-toolbar-layout legend { font-weight: 600; padding: 0; float: left; width: 100%; margin-bottom: 4px; }
+        #cc-toolbar-layout .cc-show { display: flex; align-items: flex-start; gap: 6px; clear: both; }
+        #cc-toolbar-layout .cc-show input { margin: 2px 0 0; }
+        #cc-licence-save { background: #2c7a4b !important; border-color: #2c7a4b !important; color: #fff; }
+        .cc-settings-open body > :not(.cc-top):not(#cc-settings):not(#status):not(script) { display: none !important; }
+        /* A window that is only there for the picture or chemical structure editor, which covers it. */
+        .cc-figure-only body > .cc-top, .cc-figure-only body > #equation-editor, .cc-figure-only body > #cc-style,
+        .cc-figure-only body > .cc-actions, .cc-figure-only body > #cc-editing, .cc-figure-only body > #cc-waiting,
+        .cc-figure-only body > #cc-predictor { display: none !important; }
     </style>
 </head>
 <body>
-    <p class="hint">Build your equation, then press Insert to add it to the document at your
-        cursor (Docs) or onto the current slide (Slides).</p>
+    <div class="cc-top">
+        <div class="cc-top-buttons">
+            <button type="button" id="cc-open-window" class="cc-open-window" hidden
+                title="Open the equation editor in a larger window over the document">&#x2922; Larger</button>
+            <button type="button" id="cc-settings-btn" class="cc-open-window cc-settings-btn" hidden aria-expanded="false"
+                aria-controls="cc-settings" title="Settings: your licence key">&#x2699;&#xFE0E;</button>
+        </div>
+    </div>
+
+    <section id="cc-settings" hidden aria-label="Settings">
+        <h2>Settings</h2>
+        <label for="cc-licence">Licence key</label>
+        <input type="password" id="cc-licence" autocomplete="off" spellcheck="false" placeholder="fx_pk_...">
+        <label class="cc-show"><input type="checkbox" id="cc-licence-show"> Show the key</label>
+        <p id="cc-licence-state"></p>
+        <p>Your key is kept with your Google account, for you alone, and used in every document you open
+            this add-on in. Get one from
+            <a href="https://fxeditor.codecogs.com/purchase" target="_blank" rel="noopener">fxeditor.codecogs.com/purchase</a>.</p>
+        <p>A key works on the domains it was issued for. This sidebar runs on <code id="cc-host"></code>.</p>
+        <div class="cc-actions">
+            <button type="button" id="cc-licence-save">Save</button>
+            <button type="button" id="cc-licence-remove">Remove</button>
+        </div>
+        <fieldset id="cc-toolbar-layout">
+            <legend>Toolbar</legend>
+            <label class="cc-show"><input type="radio" name="cc-toolbar-layout" value="fit"> Fit the sidebar: the
+                panels used most, in rows that fit</label>
+            <label class="cc-show"><input type="radio" name="cc-toolbar-layout" value="scroll"> Scroll sideways: the
+                full toolbar, in two rows with scroll bars</label>
+        </fieldset>
+        <div class="cc-actions" style="margin-top: 16px">
+            <button type="button" id="cc-settings-close">Back to the editor</button>
+        </div>
+    </section>
 
     <div id="equation-editor" class="CCEqnEditor">
         <div class="CCEditorBar">
@@ -123,9 +210,13 @@
         <button type="button" id="cc-eq-bg-none" class="cc-bg-none" title="No background: transparent">None</button>
     </div>
 
+    <div id="cc-editing" hidden>Editing the equation selected in the document.
+        <button type="button" title="Leave the selected equation as it is, and insert this one as a new equation">Insert as new instead</button></div>
     <div class="cc-actions">
         <button id="insert-btn" disabled>Insert</button>
+        <button id="close-btn" type="button" hidden title="Close this window, and take the equation back to the sidebar">Close</button>
     </div>
+    <div id="cc-waiting" hidden><span></span> <button type="button">Stop waiting</button></div>
     <div id="status"></div>
     <aside id="cc-predictor" class="cc-predictor" aria-label="Suggested equations" hidden></aside>
 
@@ -152,9 +243,19 @@
         // fxTeX Pro's optional packages - chemical formulae (\ce), chemical structures (\chemfig),
         // the physics package (\dv) and the picture environment - are off unless named here, and
         // are named only with a licence key: fxTeX Pro's packages come with a licence.
+        // licenceState: whether the key opened fxTeX Pro here, and if not why, for Settings to say.
+        var licenceState = { ok: false, problem: '' };
         function ensureInit(licence) {
             return (typeof EqEditor.init === 'function')
-                ? EqEditor.init({licence: licence || '', packages: licence ? ['mhchem', 'chemfig', 'physics', 'picture'] : []}).catch(function (err) {
+                ? EqEditor.init({licence: licence || '', packages: licence ? ['mhchem', 'chemfig', 'physics', 'picture'] : []}).then(function () {
+                    // An expired key can still unlock a build that draws "expired" in place of
+                    // each equation: info() says so.
+                    var core = typeof EqEditor.core === 'function' ? EqEditor.core() : null;
+                    var info = core && typeof core.info === 'function' ? core.info() : null;
+                    if (info && info.expired) licenceState.problem = 'the licence has expired';
+                    else licenceState.ok = true;
+                }, function (err) {
+                    licenceState.problem = String(err && err.message || err).replace(/^fxTeX Pro:\s*/, '');
                     window.console && console.warn('fxTeX Pro: ' + (err && err.message || err));
                 })
                 : Promise.resolve();
@@ -294,6 +395,33 @@
             document.getElementById('cc-toolbar').style.zoom = String(pct / 100);
             document.getElementById('cc-toolbar-size').value = pct;
             document.getElementById('cc-toolbar-size-value').textContent = pct + '%';
+        }
+        // The sidebar's toolbar, unless the design names one: Google's sidebar is 300px wide, which
+        // cuts the standard toolbar's two rows off a third of the way along, so it has the panels
+        // used most, in rows that fit at full size. The picture and chemical structure editors are
+        // in 'editors'; the full toolbar is in the Larger window.
+        var SIDEBAR_TOOLBAR = [
+            ['operators', 'accents'],
+            ['brackets', 'greeklower', 'greekupper'],
+            ['relations', 'arrows', 'binary'],
+            ['matrix', 'editors']
+        ];
+        // Until the author sets the size themselves, the toolbar is as large as fits across - the
+        // few pixels a scrollbar or another font can take. Measured at full size, again as the
+        // fonts arrive and the toolbar fits itself to its row.
+        // Settings' other choice (prefs.toolbarScroll): the full toolbar in the sidebar, its two rows
+        // scrolling sideways, at full size.
+        function scrollingToolbar() {
+            return PAGE.mode === 'sidebar' && prefs.toolbarScroll === true && !design.toolbar;
+        }
+        function fitToolbar() {
+            if (prefs.toolbarChosen) return;
+            if (scrollingToolbar()) return applyToolbarSize(100);
+            var bar = document.getElementById('cc-toolbar');
+            bar.style.zoom = '1';
+            var need = 0, room = bar.clientWidth;
+            bar.querySelectorAll('.cc_toolbar').forEach(function (row) { need = Math.max(need, row.scrollWidth); });
+            applyToolbarSize(need > room + 1 ? Math.floor(room / need * 20) * 5 : 100);
         }
 
         // Each pane's own height - the maths view's and the LaTeX markup's, which show together when
@@ -498,7 +626,8 @@
                 .addOutput(eqOutput)
                 .addHistoryMenu(new EqEditor.History('cc-history'));
 
-            eqToolbar = EqEditor.Toolbar.link('cc-toolbar', design.toolbar || 'default', design.toolbarScale || 1).addTextArea(eqTextArea);
+            eqToolbar = EqEditor.Toolbar.link('cc-toolbar', design.toolbar || (scrollingToolbar() ? 'default' : PAGE.mode === 'sidebar' ? SIDEBAR_TOOLBAR : 'default'),
+                design.toolbarScale || 1).addTextArea(eqTextArea);
 
             if (typeof EqEditor.MathView !== 'undefined') {
                 eqMathView = EqEditor.MathView.link('cc-mathview').addTextArea(eqTextArea);
@@ -525,7 +654,12 @@
                 if (e.target.matches('input[data-predictor-toggle]')) { applyPredictor(e.target.checked); savePrefs(); }
             });
             var sizeInput = document.getElementById('cc-toolbar-size');
-            sizeInput.addEventListener('input', function () { applyToolbarSize(Number(sizeInput.value)); });
+            sizeInput.addEventListener('input', function () {
+                prefs.toolbarChosen = true;
+                applyToolbarSize(Number(sizeInput.value));
+            });
+            fitToolbar();
+            [300, 1200].forEach(function (t) { setTimeout(fitToolbar, t); });
             sizeInput.addEventListener('change', savePrefs);
             watchGrips();
 
@@ -547,20 +681,260 @@
             // Rendered at the resolution its size asks for - see EQUATION_DPI.
             if (typeof eqOutput.setDpi === 'function') eqOutput.setDpi(Math.round(EQUATION_DPI * prefs.size / EQUATION_PT));
             var url = typeof eqOutput.getEquationURL === 'function' ? eqOutput.getEquationURL() : eqOutput.exportAs('url');
+            var update = editing;
             document.getElementById('insert-btn').disabled = true;
-            setStatus('Inserting...', true);
+            setStatus(update ? 'Updating...' : 'Inserting...', true);
+            busy = true;
 
             google.script.run
                 .withSuccessHandler(function (result) {
+                    busy = false;
                     document.getElementById('insert-btn').disabled = false;
                     setStatus(result.message, result.ok);
+                    // The updated equation is selected in its place: the same one, not a new one to load.
+                    if (result.ok && update && result.key) lastKey = result.key;
                 })
                 .withFailureHandler(function (err) {
+                    busy = false;
                     document.getElementById('insert-btn').disabled = false;
                     setStatus('Could not insert the equation: ' + err.message, false);
                 })
-                .insertEquation(url, latex, typeof eqOutput.setDpi === 'function' ? EQUATION_DPI : 0);
+                .insertEquation(url, latex, typeof eqOutput.setDpi === 'function' ? EQUATION_DPI : 0,
+                    { size: prefs.size || EQUATION_PT, fg: prefs.fg || '', bg: prefs.bg || '', inline: prefs.inline === true },
+                    update);
         });
+
+        // ---- Windows over the document -------------------------------------------------------
+        // This page is the sidebar, or a window it opened over the document (FX_PAGE, set by
+        // openEditorWindow() in Code.gs): the equation editor at full size ('equation'), or the
+        // picture ('picture') or chemical structure ('chemfig') editor.
+        var PAGE = window.FX_PAGE || { mode: 'sidebar', id: '' };
+        // Only inside Google: the stand-in preview (example.html) has google.script.run, but no
+        // google.script.host and no document to open windows over.
+        var IN_GOOGLE = !!(window.google && google.script && google.script.host);
+        var FIGURES = { picture: 'PictureEditor', chemfig: 'ChemfigEditor' };
+        var NAMES = { equation: 'equation editor', picture: 'picture editor', chemfig: 'chemical structure editor' };
+        // What a window for the picture or chemical structure editor says until that editor is up.
+        if (FIGURES[PAGE.mode]) setStatus('Opening the ' + NAMES[PAGE.mode] + '...', true);
+        // The fast way for a window to answer the sidebar, where the browser lets the two frames
+        // share it; otherwise the answer goes through the server (finishEditorWindow).
+        var channel = null;
+        try { channel = new BroadcastChannel('cc-eqneditor-google'); } catch (e) {}
+
+        function currentLatex() {
+            return eqTextArea ? eqTextArea.getTextArea().textContent.trim() : '';
+        }
+        function setLatex(latex) {
+            eqTextArea.clear();
+            if (latex) eqTextArea.insert(latex, latex.length);
+            eqTextArea.notifyOutputs();
+        }
+
+        // The sidebar: opens `kind` in a window, and resolves with its answer - the LaTeX, or null
+        // when it was cancelled - asking the server for it until it comes, or the window says so
+        // on the channel. Opening another window ends the wait for this one, as a cancel.
+        var waiting = null;
+        function openWindow(kind, request) {
+            endWaiting(null);
+            return new Promise(function (resolve) {
+                google.script.run
+                    .withSuccessHandler(function (id) {
+                        waiting = { id: id, resolve: resolve, until: Date.now() + 2 * 60 * 60 * 1000 };
+                        var box = document.getElementById('cc-waiting');
+                        box.querySelector('span').textContent = 'The ' + NAMES[kind] + ' is open over the document.';
+                        box.hidden = false;
+                        askSoon();
+                    })
+                    .withFailureHandler(function (err) {
+                        setStatus('Could not open the ' + NAMES[kind] + ': ' + err.message, false);
+                        resolve(null);
+                    })
+                    .openEditorWindow(kind, request);
+            });
+        }
+        function endWaiting(result) {
+            if (!waiting) return;
+            var w = waiting;
+            waiting = null;
+            clearTimeout(w.timer);
+            document.getElementById('cc-waiting').hidden = true;
+            w.resolve(result);
+        }
+        function askSoon() {
+            var w = waiting;
+            w.timer = setTimeout(function () {
+                if (waiting !== w) return;
+                if (Date.now() > w.until) return endWaiting(null);
+                google.script.run
+                    .withSuccessHandler(function (answer) {
+                        if (waiting !== w) return;
+                        if (answer) endWaiting(answer.result); else askSoon();
+                    })
+                    .withFailureHandler(function () { if (waiting === w) askSoon(); })
+                    .editorWindowResult(w.id);
+            }, 1500);
+        }
+        if (channel) {
+            channel.onmessage = function (e) {
+                var d = e.data || {};
+                if (waiting && d.id === waiting.id) endWaiting(d.result == null ? null : d.result);
+            };
+        }
+        document.querySelector('#cc-waiting button').addEventListener('click', function () { endWaiting(null); });
+
+        // The sidebar: the picture and chemical structure editors - opened from the toolbar, the
+        // maths view's menus or the LaTeX - open in a window, since neither fits in 300px. Their
+        // open() is what the rest of the editor calls, and resolves as theirs does.
+        function figuresInWindows() {
+            Object.keys(FIGURES).forEach(function (kind) {
+                var editor = EqEditor[FIGURES[kind]];
+                if (!editor || typeof editor.open !== 'function') return;
+                editor.open = function (latex, options) {
+                    options = options || {};
+                    return openWindow(kind, { latex: latex || '', setup: options.setup || '',
+                        saveLabel: options.saveLabel || '', explicitUnits: !!options.explicitUnits });
+                };
+            });
+        }
+
+        // A window: answers the sidebar once - on the channel and through the server - and closes.
+        // Closed with Google's own X instead, it answers on the channel as it goes, if it can.
+        var answered = false;
+        function answer(result) {
+            if (answered) return;
+            answered = true;
+            if (channel) channel.postMessage({ id: PAGE.id, result: result });
+            var close = function () { google.script.host.close(); };
+            google.script.run.withSuccessHandler(close).withFailureHandler(close).finishEditorWindow(PAGE.id, result);
+        }
+        window.addEventListener('pagehide', function () {
+            if (PAGE.mode === 'sidebar' || answered || !channel) return;
+            channel.postMessage({ id: PAGE.id, result: PAGE.mode === 'equation' ? currentLatex() : null });
+        });
+
+        function openAsWindow(server, request) {
+            if (PAGE.mode === 'equation') {
+                mount(server);
+                if (request.latex) setLatex(request.latex);
+                var closeBtn = document.getElementById('close-btn');
+                closeBtn.hidden = false;
+                closeBtn.addEventListener('click', function () { answer(currentLatex()); });
+                watchSelection();
+                return;
+            }
+            var editor = EqEditor[FIGURES[PAGE.mode]];
+            if (!editor) {
+                setStatus('This version of the equation editor has no ' + NAMES[PAGE.mode] + '.', false);
+                return;
+            }
+            document.documentElement.classList.add('cc-figure-only');
+            setStatus('Opening the ' + NAMES[PAGE.mode] + '...', true);
+            var options = {};
+            if (request.setup) options.setup = request.setup;
+            if (request.saveLabel) options.saveLabel = request.saveLabel;
+            if (request.explicitUnits) options.explicitUnits = true;
+            editor.open(request.latex || null, options).then(answer, function () { answer(null); });
+        }
+
+        // ---- An equation already in the document -----------------------------------------------
+        // Clicking an equation in the document selects it; asked every 1.5s what is selected (only
+        // while this page is showing, and not while it is inserting or waiting for a window), the
+        // server says when it is one this add-on put in (getSelectedEquation() in Code.gs). It
+        // opens here, as it was set, and Insert becomes Update. Selecting something else leaves
+        // the editor as it is, and Insert inserts again.
+        var editing = false, busy = false, lastKey = null, setAsideKey = null;
+        function setEditing(on) {
+            editing = on;
+            document.getElementById('insert-btn').textContent = on ? 'Update' : 'Insert';
+            document.getElementById('cc-editing').hidden = !on;
+        }
+        function onSelected(eq) {
+            var key = eq ? eq.key : null;
+            if (key === lastKey) return;
+            lastKey = key;
+            if (!eq || key === setAsideKey) return setEditing(false);
+            setAsideKey = null;
+            setLatex(eq.latex);
+            if (eq.size) applyEquationSize(eq.size);
+            prefs.fg = eq.fg || '#000000';
+            prefs.bg = eq.bg || '';
+            applyColours();
+            applyInline(!!eq.inline);
+            setEditing(true);
+            setStatus('', true);
+        }
+        function watchSelection() {
+            var next = function (ms) { setTimeout(ask, ms); };
+            var ask = function () {
+                if (document.hidden || busy || waiting) return next(1500);
+                google.script.run
+                    .withSuccessHandler(function (eq) { if (!busy) onSelected(eq); next(1500); })
+                    .withFailureHandler(function () { next(5000); })
+                    .getSelectedEquation();
+            };
+            ask();
+        }
+        document.querySelector('#cc-editing button').addEventListener('click', function () {
+            setAsideKey = lastKey;
+            setEditing(false);
+        });
+
+        // ---- Settings: the reader's own licence key ------------------------------------------
+        // Kept in their User properties by saveLicence() in Code.gs, which reopens the sidebar
+        // with it. The add-on's own key (a Script property) is used without one, and never shown.
+        function licenceStateText(from) {
+            if (!from) return { ok: false, text: 'No licence key. Without one the maths view cannot show ' +
+                'equations, and chemistry and pictures are off; equations can still be written in LaTeX and inserted.' };
+            var whose = from === 'own' ? 'Your key' : "The add-on's own licence";
+            if (licenceState.ok) return { ok: true, text: whose + ' is working: fxTeX Pro, with chemistry and pictures.' +
+                (from === 'own' ? '' : ' A key of your own, saved here, is used in its place.') };
+            return { ok: false, text: whose + ' is not working here: ' + (licenceState.problem || 'it was not accepted') + '.' };
+        }
+        function openSettings(open) {
+            document.documentElement.classList.toggle('cc-settings-open', open);
+            document.getElementById('cc-settings').hidden = !open;
+            document.getElementById('cc-settings-btn').setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open) document.getElementById('cc-licence').focus();
+        }
+        function watchSettings(config) {
+            var input = document.getElementById('cc-licence');
+            if (config.licenceFrom === 'own') input.value = config.licence;
+            var state = licenceStateText(config.licenceFrom), box = document.getElementById('cc-licence-state');
+            box.textContent = state.text;
+            box.className = state.ok ? 'ok' : '';
+            document.getElementById('cc-host').textContent = location.hostname;
+            document.getElementById('cc-licence-remove').hidden = config.licenceFrom !== 'own';
+            var btn = document.getElementById('cc-settings-btn');
+            btn.hidden = false;
+            btn.addEventListener('click', function () { openSettings(document.getElementById('cc-settings').hidden); });
+            document.getElementById('cc-settings-close').addEventListener('click', function () { openSettings(false); });
+            document.getElementById('cc-licence-show').addEventListener('change', function (e) {
+                input.type = e.target.checked ? 'text' : 'password';
+            });
+            var save = function (key) {
+                setStatus('Saving...', true);
+                google.script.run
+                    .withSuccessHandler(function () { setStatus('Saved. Reopening the editor...', true); })
+                    .withFailureHandler(function (err) { setStatus(err.message, false); })
+                    .saveLicence(key);
+            };
+            document.getElementById('cc-licence-save').addEventListener('click', function () { save(input.value); });
+            input.addEventListener('keydown', function (e) { if (e.key === 'Enter') save(input.value); });
+            document.getElementById('cc-licence-remove').addEventListener('click', function () { save(''); });
+            // The toolbar: fitted, or the full one scrolling sideways - kept in this browser, as its
+            // size is, and the sidebar reopened with it. A design that names a toolbar decides instead.
+            var layout = document.getElementById('cc-toolbar-layout');
+            layout.hidden = !!design.toolbar;
+            layout.querySelector('input[value="' + (prefs.toolbarScroll ? 'scroll' : 'fit') + '"]').checked = true;
+            layout.addEventListener('change', function (e) {
+                prefs.toolbarScroll = e.target.value === 'scroll';
+                savePrefs();
+                setStatus('Reopening the editor...', true);
+                google.script.run.withFailureHandler(function (err) { setStatus(err.message, false); }).showSidebar();
+            });
+            // Opened at once when there is no key at all, or the reader's own is not working.
+            if (!config.licenceFrom || (config.licenceFrom === 'own' && !licenceState.ok)) openSettings(true);
+        }
 
         google.script.run
             .withSuccessHandler(function (config) {
@@ -568,7 +942,30 @@
                 design = config.design || {};
                 loadScript(serverOrigin(config.server) + '/fxeditor.api.min.js')
                     .then(function () { return ensureInit(config.licence); })
-                    .then(function () { mount(config.server); })
+                    .then(function () {
+                        if (PAGE.mode !== 'sidebar') {
+                            google.script.run
+                                .withSuccessHandler(function (request) { openAsWindow(config.server, request || {}); })
+                                .withFailureHandler(function (err) { setStatus(err.message, false); })
+                                .getEditorWindow(PAGE.id);
+                            return;
+                        }
+                        if (IN_GOOGLE) {
+                            figuresInWindows();
+                            var larger = document.getElementById('cc-open-window');
+                            larger.hidden = false;
+                            larger.addEventListener('click', function () {
+                                openWindow('equation', { latex: currentLatex() }).then(function (latex) {
+                                    if (typeof latex === 'string') setLatex(latex);
+                                });
+                            });
+                        }
+                        mount(config.server);
+                        if (IN_GOOGLE) {
+                            watchSelection();
+                            watchSettings(config);
+                        }
+                    })
                     .catch(function (err) { setStatus(err.message, false); });
             })
             .withFailureHandler(function (err) {
